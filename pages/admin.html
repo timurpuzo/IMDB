@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>IMDB - Admin Panel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="index.html" class="navbar-logo">IMDB</a>
+    <div class="navbar-links" id="navbar-links"></div>
+  </nav>
+
+  <div class="container" style="max-width:920px">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px">
+      <h1 class="section-title" style="margin-bottom:0; font-size:1.6rem">Admin Panel</h1>
+      <button class="btn btn-secondary" id="seedBtn">Seed from TMDb</button>
+    </div>
+
+    <!-- Add/Edit Form -->
+    <div class="section-card">
+      <h3 id="formTitle">Add Movie</h3>
+      <form id="movieForm">
+        <div class="form-group">
+          <label>Title</label>
+          <input class="form-input" id="fTitle" required />
+        </div>
+        <div class="form-group">
+          <label>Overview</label>
+          <textarea class="form-input" id="fOverview" rows="3"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Poster URL</label>
+            <input class="form-input" id="fPoster" />
+          </div>
+          <div class="form-group">
+            <label>Release Date</label>
+            <input class="form-input" id="fDate" type="date" />
+          </div>
+          <div class="form-group">
+            <label>Genres (comma separated)</label>
+            <input class="form-input" id="fGenres" placeholder="Action, Drama" />
+          </div>
+          <div class="form-group">
+            <label>Type</label>
+            <select class="form-input" id="fType">
+              <option value="movie">Movie</option>
+              <option value="tv">TV Show</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex; gap:8px">
+          <button type="submit" class="btn btn-primary" id="submitBtn">Add Movie</button>
+          <button type="button" class="btn btn-secondary hidden" id="cancelBtn">Cancel</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Movie List -->
+    <h2 class="section-title" id="listTitle">All Movies</h2>
+    <div id="movieList"></div>
+
+    <div class="pagination" id="pagination" style="display:none">
+      <button class="btn btn-secondary" id="prevBtn">Previous</button>
+      <span id="pageInfo"></span>
+      <button class="btn btn-secondary" id="nextBtn">Next</button>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    let editId = null;
+    let page = 1;
+    let totalPages = 1;
+
+    async function loadMovies() {
+      try {
+        const res = await api.getMovies({ page, limit: 15, sort: '-createdAt' });
+        const movies = res.data;
+        totalPages = res.pagination.pages || 1;
+
+        document.getElementById('listTitle').textContent = `All Movies (${res.pagination.total})`;
+        const list = document.getElementById('movieList');
+        list.innerHTML = '';
+
+        movies.forEach((m) => {
+          const item = document.createElement('div');
+          item.className = 'admin-movie-item';
+          item.innerHTML = `
+            <div>
+              <h4>${m.title}</h4>
+              <div class="meta">${m.type} · ${m.releaseDate?.substring(0, 4) || 'N/A'} · ★ ${m.averageRating?.toFixed(1) || '0.0'}</div>
+            </div>
+            <div class="admin-actions">
+              <button class="btn btn-sm btn-secondary" onclick="startEdit('${m._id}')">Edit</button>
+              <button class="btn btn-sm btn-danger" onclick="handleDelete('${m._id}')">Delete</button>
+            </div>
+          `;
+          list.appendChild(item);
+        });
+
+        const pag = document.getElementById('pagination');
+        pag.style.display = totalPages > 1 ? 'flex' : 'none';
+        document.getElementById('pageInfo').textContent = `Page ${page} of ${totalPages}`;
+        document.getElementById('prevBtn').disabled = page <= 1;
+        document.getElementById('nextBtn').disabled = page >= totalPages;
+      } catch (err) { console.error(err); }
+    }
+
+    function clearForm() {
+      editId = null;
+      document.getElementById('fTitle').value = '';
+      document.getElementById('fOverview').value = '';
+      document.getElementById('fPoster').value = '';
+      document.getElementById('fDate').value = '';
+      document.getElementById('fGenres').value = '';
+      document.getElementById('fType').value = 'movie';
+      document.getElementById('formTitle').textContent = 'Add Movie';
+      document.getElementById('submitBtn').textContent = 'Add Movie';
+      document.getElementById('cancelBtn').classList.add('hidden');
+    }
+
+    async function startEdit(id) {
+      try {
+        const res = await api.getMovie(id);
+        const m = res.data.movie;
+        editId = id;
+        document.getElementById('fTitle').value = m.title || '';
+        document.getElementById('fOverview').value = m.overview || '';
+        document.getElementById('fPoster').value = m.posterPath || '';
+        document.getElementById('fDate').value = m.releaseDate || '';
+        document.getElementById('fGenres').value = (m.genres || []).join(', ');
+        document.getElementById('fType').value = m.type || 'movie';
+        document.getElementById('formTitle').textContent = 'Edit Movie';
+        document.getElementById('submitBtn').textContent = 'Update Movie';
+        document.getElementById('cancelBtn').classList.remove('hidden');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } catch (err) { alert(err.message); }
+    }
+
+    async function handleDelete(id) {
+      if (!confirm('Delete this movie and all related data?')) return;
+      try {
+        await api.deleteMovie(id);
+        loadMovies();
+      } catch (err) { alert(err.message); }
+    }
+
+    document.getElementById('movieForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const payload = {
+        title: document.getElementById('fTitle').value,
+        overview: document.getElementById('fOverview').value,
+        posterPath: document.getElementById('fPoster').value,
+        releaseDate: document.getElementById('fDate').value,
+        genres: document.getElementById('fGenres').value.split(',').map((g) => g.trim()).filter(Boolean),
+        type: document.getElementById('fType').value,
+      };
+
+      try {
+        if (editId) {
+          await api.updateMovie(editId, payload);
+        } else {
+          await api.createMovie(payload);
+        }
+        clearForm();
+        loadMovies();
+      } catch (err) { alert(err.message); }
+    });
+
+    document.getElementById('cancelBtn').addEventListener('click', clearForm);
+
+    document.getElementById('seedBtn').addEventListener('click', async () => {
+      const btn = document.getElementById('seedBtn');
+      btn.disabled = true;
+      btn.textContent = 'Seeding...';
+      try {
+        const res = await api.seed();
+        alert(res.data.message);
+        loadMovies();
+      } catch (err) { alert(err.message); }
+      btn.disabled = false;
+      btn.textContent = 'Seed from TMDb';
+    });
+
+    document.getElementById('prevBtn').addEventListener('click', () => { if (page > 1) { page--; loadMovies(); } });
+    document.getElementById('nextBtn').addEventListener('click', () => { if (page < totalPages) { page++; loadMovies(); } });
+
+    initPage().then(() => {
+      if (!currentUser || currentUser.role !== 'admin') { window.location.href = 'index.html'; return; }
+      loadMovies();
+    });
+  </script>
+</body>
+</html>

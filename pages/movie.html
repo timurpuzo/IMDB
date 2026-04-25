@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>IMDB - Movie Details</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="index.html" class="navbar-logo">IMDB</a>
+    <div class="navbar-links" id="navbar-links"></div>
+  </nav>
+
+  <div class="container">
+    <div id="loader" class="loader">Loading...</div>
+    <div id="content" class="hidden">
+
+      <!-- Movie Detail -->
+      <div class="detail-grid">
+        <img id="poster" class="detail-poster" src="" alt="" />
+        <div class="detail-info">
+          <h1 id="title"></h1>
+          <div class="detail-meta">
+            <span id="year"></span>
+            <span id="type"></span>
+            <span class="rating-badge" id="avgRating"></span>
+          </div>
+          <div class="genre-tags" id="genres"></div>
+          <p class="detail-overview" id="overview"></p>
+
+          <div id="castSection" class="hidden">
+            <h3>Cast</h3>
+            <div class="cast-grid" id="castGrid"></div>
+          </div>
+
+          <div id="watchlistBtn" class="hidden" style="margin-top:20px">
+            <button class="btn btn-primary" id="toggleWatchlist">Add to Watchlist</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rating Section -->
+      <div id="ratingSection" class="section-card hidden">
+        <h3>Your Rating</h3>
+        <div class="star-rating" id="starRating"></div>
+        <button class="btn btn-sm btn-danger hidden" id="removeRating" style="margin-top:10px">Remove Rating</button>
+      </div>
+
+      <!-- Reviews Section -->
+      <div>
+        <h2 class="section-title" id="reviewsTitle">Reviews</h2>
+
+        <!-- Write Review -->
+        <div id="reviewFormBox" class="section-card hidden">
+          <h3>Write a Review</h3>
+          <textarea class="form-input" id="reviewText" placeholder="Write your review (at least 10 characters)..."></textarea>
+          <button class="btn btn-primary" id="submitReview" style="margin-top:10px">Submit Review</button>
+        </div>
+
+        <!-- Review list -->
+        <div id="reviewsList"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const movieId = params.get('id');
+    let myRatingValue = 0;
+    let inWatchlist = false;
+    let movieData = null;
+    let reviewsData = [];
+
+    function renderStars() {
+      const container = document.getElementById('starRating');
+      container.innerHTML = '';
+      for (let i = 1; i <= 10; i++) {
+        const star = document.createElement('span');
+        star.className = `star ${i <= myRatingValue ? 'filled' : ''}`;
+        star.textContent = '★';
+        star.addEventListener('click', () => handleRate(i));
+        star.addEventListener('mouseenter', () => highlightStars(i));
+        star.addEventListener('mouseleave', () => highlightStars(myRatingValue));
+        container.appendChild(star);
+      }
+      if (myRatingValue > 0) {
+        const val = document.createElement('span');
+        val.className = 'rating-value';
+        val.textContent = `${myRatingValue}/10`;
+        container.appendChild(val);
+      }
+      document.getElementById('removeRating').classList.toggle('hidden', myRatingValue === 0);
+    }
+
+    function highlightStars(n) {
+      document.querySelectorAll('#starRating .star').forEach((s, i) => {
+        s.classList.toggle('filled', i < n);
+      });
+    }
+
+    async function handleRate(value) {
+      try {
+        await api.rateMovie(movieId, value);
+        myRatingValue = value;
+        renderStars();
+        loadMovieData();
+      } catch (err) { alert(err.message); }
+    }
+
+    async function loadMovieData() {
+      try {
+        const res = await api.getMovie(movieId);
+        movieData = res.data.movie;
+        reviewsData = res.data.reviews;
+        renderMovie();
+        renderReviews();
+      } catch (err) {
+        document.getElementById('loader').textContent = 'Movie not found';
+      }
+    }
+
+    function renderMovie() {
+      document.getElementById('loader').classList.add('hidden');
+      document.getElementById('content').classList.remove('hidden');
+      document.title = `IMDB - ${movieData.title}`;
+
+      document.getElementById('poster').src = movieData.posterPath || 'https://via.placeholder.com/300x450/1a1a1a/999?text=No+Image';
+      document.getElementById('poster').alt = movieData.title;
+      document.getElementById('title').textContent = movieData.title;
+      document.getElementById('year').textContent = movieData.releaseDate ? movieData.releaseDate.substring(0, 4) : '';
+      document.getElementById('type').textContent = movieData.type === 'tv' ? 'TV Show' : 'Movie';
+      document.getElementById('avgRating').textContent = `★ ${movieData.averageRating ? movieData.averageRating.toFixed(1) : 'N/A'} (${movieData.ratingCount || 0} votes)`;
+      document.getElementById('overview').textContent = movieData.overview || 'No overview available.';
+
+      // Genres
+      const genresEl = document.getElementById('genres');
+      genresEl.innerHTML = '';
+      (movieData.genres || []).forEach((g) => {
+        const tag = document.createElement('span');
+        tag.className = 'genre-tag';
+        tag.textContent = g;
+        genresEl.appendChild(tag);
+      });
+
+      // Cast
+      if (movieData.cast && movieData.cast.length > 0) {
+        document.getElementById('castSection').classList.remove('hidden');
+        const castGrid = document.getElementById('castGrid');
+        castGrid.innerHTML = '';
+        movieData.cast.forEach((c) => {
+          const chip = document.createElement('div');
+          chip.className = 'cast-chip';
+          chip.innerHTML = `${c.name} <span>as ${c.character}</span>`;
+          castGrid.appendChild(chip);
+        });
+      }
+    }
+
+    function renderReviews() {
+      document.getElementById('reviewsTitle').textContent = `Reviews (${reviewsData.length})`;
+      const list = document.getElementById('reviewsList');
+      list.innerHTML = '';
+
+      const myReview = currentUser ? reviewsData.find((r) => r.user?._id === currentUser._id) : null;
+
+      // Show review form if logged in and no review yet
+      if (currentUser && !myReview) {
+        document.getElementById('reviewFormBox').classList.remove('hidden');
+      } else {
+        document.getElementById('reviewFormBox').classList.add('hidden');
+      }
+
+      if (reviewsData.length === 0) {
+        list.innerHTML = '<div class="empty-state"><p>No reviews yet. Be the first!</p></div>';
+        return;
+      }
+
+      reviewsData.forEach((r) => {
+        const card = document.createElement('div');
+        card.className = 'review-card';
+        const isOwner = currentUser && r.user?._id === currentUser._id;
+        card.innerHTML = `
+          <div class="review-header">
+            <span class="review-author">${r.user?.username || 'Unknown'}</span>
+            <span class="review-date">${new Date(r.createdAt).toLocaleDateString()}</span>
+          </div>
+          <p class="review-text">${r.text}</p>
+          ${isOwner ? `
+            <div class="review-actions">
+              <button class="btn btn-sm btn-secondary" onclick="editReview('${r._id}', this)">Edit</button>
+              <button class="btn btn-sm btn-danger" onclick="handleDeleteReview()">Delete</button>
+            </div>
+          ` : ''}
+        `;
+        list.appendChild(card);
+      });
+    }
+
+    async function handleDeleteReview() {
+      if (!confirm('Delete your review?')) return;
+      try {
+        await api.deleteReview(movieId);
+        loadMovieData();
+      } catch (err) { alert(err.message); }
+    }
+
+    function editReview(reviewId, btn) {
+      const card = btn.closest('.review-card');
+      const textEl = card.querySelector('.review-text');
+      const currentText = textEl.textContent;
+
+      textEl.innerHTML = `
+        <textarea class="form-input" id="editText" style="margin-bottom:8px">${currentText}</textarea>
+        <button class="btn btn-sm btn-primary" onclick="saveEditReview()">Save</button>
+        <button class="btn btn-sm btn-secondary" onclick="loadMovieData()">Cancel</button>
+      `;
+      card.querySelector('.review-actions').classList.add('hidden');
+    }
+
+    async function saveEditReview() {
+      const text = document.getElementById('editText').value.trim();
+      if (text.length < 10) return alert('Review must be at least 10 characters');
+      try {
+        await api.updateReview(movieId, text);
+        loadMovieData();
+      } catch (err) { alert(err.message); }
+    }
+
+    document.getElementById('submitReview').addEventListener('click', async () => {
+      const text = document.getElementById('reviewText').value.trim();
+      if (text.length < 10) return alert('Review must be at least 10 characters');
+      try {
+        await api.createReview(movieId, text);
+        document.getElementById('reviewText').value = '';
+        loadMovieData();
+      } catch (err) { alert(err.message); }
+    });
+
+    document.getElementById('removeRating').addEventListener('click', async () => {
+      try {
+        await api.deleteRating(movieId);
+        myRatingValue = 0;
+        renderStars();
+        loadMovieData();
+      } catch (err) { alert(err.message); }
+    });
+
+    document.getElementById('toggleWatchlist').addEventListener('click', async () => {
+      try {
+        const res = await api.toggleWatchlist(movieId);
+        inWatchlist = res.data.added;
+        const btn = document.getElementById('toggleWatchlist');
+        btn.textContent = inWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist';
+        btn.className = `btn ${inWatchlist ? 'btn-danger' : 'btn-primary'}`;
+      } catch (err) { alert(err.message); }
+    });
+
+    initPage().then(async () => {
+      if (!movieId) { window.location.href = 'index.html'; return; }
+
+      await loadMovieData();
+
+      if (currentUser) {
+        // Show rating & watchlist sections
+        document.getElementById('ratingSection').classList.remove('hidden');
+        document.getElementById('watchlistBtn').classList.remove('hidden');
+
+        try {
+          const rRes = await api.getMyRating(movieId);
+          myRatingValue = rRes.data?.value || 0;
+        } catch { myRatingValue = 0; }
+        renderStars();
+
+        try {
+          const wRes = await api.checkWatchlist(movieId);
+          inWatchlist = wRes.data.inWatchlist;
+          const btn = document.getElementById('toggleWatchlist');
+          btn.textContent = inWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist';
+          btn.className = `btn ${inWatchlist ? 'btn-danger' : 'btn-primary'}`;
+        } catch {}
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>IMDB - Home</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <a href="index.html" class="navbar-logo">IMDB</a>
+    <div class="navbar-links" id="navbar-links"></div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="container">
+
+    <!-- Search & Filters -->
+    <div class="search-bar">
+      <input type="text" class="search-input" id="searchInput" placeholder="Search movies and TV shows..." />
+      <select id="genreFilter"><option value="">All Genres</option></select>
+      <select id="typeFilter">
+        <option value="">All Types</option>
+        <option value="movie">Movie</option>
+        <option value="tv">TV Show</option>
+      </select>
+      <select id="sortSelect">
+        <option value="-averageRating">Rating: High → Low</option>
+        <option value="averageRating">Rating: Low → High</option>
+        <option value="-releaseDate">Year: Newest</option>
+        <option value="releaseDate">Year: Oldest</option>
+        <option value="title">Title: A-Z</option>
+      </select>
+    </div>
+
+    <!-- Movie Grid -->
+    <div id="movieGrid" class="movie-grid"></div>
+
+    <!-- Empty state -->
+    <div id="emptyState" class="empty-state hidden">
+      <h3>No movies found</h3>
+      <p>Try adjusting your search or filters</p>
+    </div>
+
+    <!-- Loader -->
+    <div id="loader" class="loader hidden">Loading...</div>
+
+    <!-- Pagination -->
+    <div class="pagination" id="pagination" style="display:none">
+      <button class="btn btn-secondary" id="prevBtn">Previous</button>
+      <span id="pageInfo"></span>
+      <button class="btn btn-secondary" id="nextBtn">Next</button>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    let currentPage = 1;
+    let totalPages = 1;
+    let searchTimeout = null;
+
+    async function loadMovies() {
+      const grid = document.getElementById('movieGrid');
+      const loader = document.getElementById('loader');
+      const empty = document.getElementById('emptyState');
+      const pag = document.getElementById('pagination');
+
+      grid.innerHTML = '';
+      loader.classList.remove('hidden');
+      empty.classList.add('hidden');
+      pag.style.display = 'none';
+
+      const params = { page: currentPage, limit: 12, sort: document.getElementById('sortSelect').value };
+      const search = document.getElementById('searchInput').value.trim();
+      const genre = document.getElementById('genreFilter').value;
+      const type = document.getElementById('typeFilter').value;
+      if (search) params.search = search;
+      if (genre) params.genre = genre;
+      if (type) params.type = type;
+
+      try {
+        const res = await api.getMovies(params);
+        loader.classList.add('hidden');
+        const movies = res.data;
+        totalPages = res.pagination.pages || 1;
+
+        if (movies.length === 0) {
+          empty.classList.remove('hidden');
+          return;
+        }
+
+        movies.forEach((movie) => {
+          const poster = movie.posterPath || 'https://via.placeholder.com/200x300/1a1a1a/999?text=No+Image';
+          const year = movie.releaseDate ? movie.releaseDate.substring(0, 4) : '';
+          const rating = movie.averageRating ? movie.averageRating.toFixed(1) : 'N/A';
+
+          const card = document.createElement('a');
+          card.href = `movie.html?id=${movie._id}`;
+          card.className = 'movie-card';
+          card.innerHTML = `
+            <img src="${poster}" alt="${movie.title}" loading="lazy" />
+            <div class="movie-card-body">
+              <h3 title="${movie.title}">${movie.title}</h3>
+              <div class="movie-card-meta">
+                <span class="movie-card-rating">★ ${rating}</span>
+                <span class="movie-card-year">${year}</span>
+              </div>
+            </div>
+          `;
+          grid.appendChild(card);
+        });
+
+        // Pagination
+        pag.style.display = 'flex';
+        document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages}`;
+        document.getElementById('prevBtn').disabled = currentPage <= 1;
+        document.getElementById('nextBtn').disabled = currentPage >= totalPages;
+      } catch (err) {
+        loader.classList.add('hidden');
+        empty.classList.remove('hidden');
+        console.error(err);
+      }
+    }
+
+    async function loadGenres() {
+      try {
+        const res = await api.getGenres();
+        const select = document.getElementById('genreFilter');
+        res.data.forEach((g) => {
+          const opt = document.createElement('option');
+          opt.value = g;
+          opt.textContent = g;
+          select.appendChild(opt);
+        });
+      } catch {}
+    }
+
+    document.getElementById('searchInput').addEventListener('input', () => {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => { currentPage = 1; loadMovies(); }, 400);
+    });
+
+    document.getElementById('genreFilter').addEventListener('change', () => { currentPage = 1; loadMovies(); });
+    document.getElementById('typeFilter').addEventListener('change', () => { currentPage = 1; loadMovies(); });
+    document.getElementById('sortSelect').addEventListener('change', () => { currentPage = 1; loadMovies(); });
+    document.getElementById('prevBtn').addEventListener('click', () => { if (currentPage > 1) { currentPage--; loadMovies(); } });
+    document.getElementById('nextBtn').addEventListener('click', () => { if (currentPage < totalPages) { currentPage++; loadMovies(); } });
+
+    initPage().then(() => {
+      loadGenres();
+      loadMovies();
+    });
+  </script>
+</body>
+</html>

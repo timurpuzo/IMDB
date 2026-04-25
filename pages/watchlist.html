@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>IMDB - My Watchlist</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="index.html" class="navbar-logo">IMDB</a>
+    <div class="navbar-links" id="navbar-links"></div>
+  </nav>
+
+  <div class="container">
+    <h1 class="section-title" style="font-size:1.6rem; margin-bottom:24px">My Watchlist</h1>
+
+    <div id="loader" class="loader">Loading...</div>
+    <div id="movieGrid" class="movie-grid hidden"></div>
+    <div id="emptyState" class="empty-state hidden">
+      <h3>Your watchlist is empty</h3>
+      <p>Browse movies and add them to your watchlist</p>
+      <a href="index.html" class="btn btn-primary" style="margin-top:16px">Browse Movies</a>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    async function loadWatchlist() {
+      const grid = document.getElementById('movieGrid');
+      const loader = document.getElementById('loader');
+      const empty = document.getElementById('emptyState');
+
+      try {
+        const res = await api.getWatchlist();
+        loader.classList.add('hidden');
+        const movies = res.data;
+
+        if (movies.length === 0) {
+          empty.classList.remove('hidden');
+          return;
+        }
+
+        grid.classList.remove('hidden');
+        movies.forEach((movie) => {
+          const poster = movie.posterPath || 'https://via.placeholder.com/200x300/1a1a1a/999?text=No+Image';
+          const year = movie.releaseDate ? movie.releaseDate.substring(0, 4) : '';
+          const rating = movie.averageRating ? movie.averageRating.toFixed(1) : 'N/A';
+
+          const card = document.createElement('a');
+          card.href = `movie.html?id=${movie._id}`;
+          card.className = 'movie-card';
+          card.innerHTML = `
+            <img src="${poster}" alt="${movie.title}" loading="lazy" />
+            <div class="movie-card-body">
+              <h3 title="${movie.title}">${movie.title}</h3>
+              <div class="movie-card-meta">
+                <span class="movie-card-rating">★ ${rating}</span>
+                <span class="movie-card-year">${year}</span>
+              </div>
+            </div>
+          `;
+          grid.appendChild(card);
+        });
+      } catch (err) {
+        loader.classList.add('hidden');
+        empty.classList.remove('hidden');
+      }
+    }
+
+    initPage().then(() => {
+      if (!currentUser) { window.location.href = 'login.html'; return; }
+      loadWatchlist();
+    });
+  </script>
+</body>
+</html>

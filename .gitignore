@@ -1,0 +1,8 @@
+node_modules/
+.env
+build/
+dist/
+.DS_Store
+*.log
+coverage/
+/SE Timur Puzo, Malek Altarhuni.txt

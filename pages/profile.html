@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>IMDB - Profile</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="index.html" class="navbar-logo">IMDB</a>
+    <div class="navbar-links" id="navbar-links"></div>
+  </nav>
+
+  <div class="container" style="max-width:860px">
+
+    <!-- Profile Header -->
+    <div class="profile-header" id="profileHeader">
+      <div class="profile-avatar" id="avatar"></div>
+      <div id="profileInfo"></div>
+    </div>
+
+    <!-- Edit form (hidden) -->
+    <div class="section-card hidden" id="editSection">
+      <h3>Edit Profile</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Username</label>
+          <input class="form-input" id="editUsername" />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input class="form-input" id="editEmail" type="email" />
+        </div>
+      </div>
+      <div style="display:flex; gap:8px">
+        <button class="btn btn-primary" id="saveBtn">Save</button>
+        <button class="btn btn-secondary" id="cancelEditBtn">Cancel</button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card"><div class="stat-number" id="statRatings">0</div><div class="stat-label">Ratings</div></div>
+      <div class="stat-card"><div class="stat-number" id="statReviews">0</div><div class="stat-label">Reviews</div></div>
+      <div class="stat-card"><div class="stat-number" id="statWatchlist">0</div><div class="stat-label">Watchlist</div></div>
+    </div>
+
+    <!-- Recommendations -->
+    <div id="recsSection" class="hidden">
+      <h2 class="section-title">Recommended For You</h2>
+      <div class="movie-grid" id="recsGrid" style="margin-bottom:32px"></div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="ratings" onclick="switchTab('ratings')">My Ratings</button>
+      <button class="tab-btn" data-tab="reviews" onclick="switchTab('reviews')">My Reviews</button>
+    </div>
+
+    <div id="ratingsTab"></div>
+    <div id="reviewsTab" class="hidden"></div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    let userRatings = [];
+    let userReviews = [];
+
+    function renderProfile() {
+      document.getElementById('avatar').textContent = currentUser.username[0].toUpperCase();
+      document.getElementById('profileInfo').innerHTML = `
+        <div class="profile-name">${currentUser.username}</div>
+        <div class="profile-email">${currentUser.email}</div>
+        <button class="btn btn-secondary btn-sm" style="margin-top:10px" onclick="showEdit()">Edit Profile</button>
+      `;
+      document.getElementById('editUsername').value = currentUser.username;
+      document.getElementById('editEmail').value = currentUser.email;
+    }
+
+    function showEdit() {
+      document.getElementById('editSection').classList.remove('hidden');
+    }
+
+    document.getElementById('cancelEditBtn').addEventListener('click', () => {
+      document.getElementById('editSection').classList.add('hidden');
+    });
+
+    document.getElementById('saveBtn').addEventListener('click', async () => {
+      const username = document.getElementById('editUsername').value.trim();
+      const email = document.getElementById('editEmail').value.trim();
+      try {
+        await api.updateProfile({ username, email });
+        await loadCurrentUser();
+        renderProfile();
+        document.getElementById('editSection').classList.add('hidden');
+      } catch (err) { alert(err.message); }
+    });
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-btn').forEach((b) => b.classList.toggle('active', b.dataset.tab === tab));
+      document.getElementById('ratingsTab').classList.toggle('hidden', tab !== 'ratings');
+      document.getElementById('reviewsTab').classList.toggle('hidden', tab !== 'reviews');
+    }
+
+    function renderRatings() {
+      const el = document.getElementById('ratingsTab');
+      if (userRatings.length === 0) {
+        el.innerHTML = '<div class="empty-state"><p>No ratings yet</p></div>';
+        return;
+      }
+      el.innerHTML = userRatings.map((r) => `
+        <div class="review-card" style="display:flex; justify-content:space-between; align-items:center">
+          <a href="movie.html?id=${r.movie?._id}" style="font-weight:600; color:var(--text)">${r.movie?.title || 'Unknown'}</a>
+          <span class="movie-card-rating" style="font-size:1rem">★ ${r.value}/10</span>
+        </div>
+      `).join('');
+    }
+
+    function renderReviews() {
+      const el = document.getElementById('reviewsTab');
+      if (userReviews.length === 0) {
+        el.innerHTML = '<div class="empty-state"><p>No reviews yet</p></div>';
+        return;
+      }
+      el.innerHTML = userReviews.map((r) => `
+        <div class="review-card">
+          <div class="review-header">
+            <a href="movie.html?id=${r.movie?._id}" class="review-author">${r.movie?.title || 'Unknown'}</a>
+            <span class="review-date">${new Date(r.createdAt).toLocaleDateString()}</span>
+          </div>
+          <p class="review-text">${r.text}</p>
+        </div>
+      `).join('');
+    }
+
+    function renderRecs(movies) {
+      if (movies.length === 0) return;
+      document.getElementById('recsSection').classList.remove('hidden');
+      const grid = document.getElementById('recsGrid');
+      movies.slice(0, 6).forEach((m) => {
+        const poster = m.posterPath || 'https://via.placeholder.com/200x300/1a1a1a/999?text=No+Image';
+        const year = m.releaseDate ? m.releaseDate.substring(0, 4) : '';
+        const card = document.createElement('a');
+        card.href = `movie.html?id=${m._id}`;
+        card.className = 'movie-card';
+        card.innerHTML = `
+          <img src="${poster}" alt="${m.title}" loading="lazy" />
+          <div class="movie-card-body">
+            <h3>${m.title}</h3>
+            <div class="movie-card-meta">
+              <span class="movie-card-rating">★ ${m.averageRating ? m.averageRating.toFixed(1) : 'N/A'}</span>
+              <span class="movie-card-year">${year}</span>
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    initPage().then(async () => {
+      if (!currentUser) { window.location.href = 'login.html'; return; }
+      renderProfile();
+
+      const [statsRes, ratingsRes, reviewsRes, recsRes] = await Promise.all([
+        api.getStats().catch(() => ({ data: {} })),
+        api.getRatings().catch(() => ({ data: [] })),
+        api.getReviews().catch(() => ({ data: [] })),
+        api.getRecommendations().catch(() => ({ data: [] })),
+      ]);
+
+      document.getElementById('statRatings').textContent = statsRes.data.ratingCount || 0;
+      document.getElementById('statReviews').textContent = statsRes.data.reviewCount || 0;
+      document.getElementById('statWatchlist').textContent = statsRes.data.watchlistCount || 0;
+
+      userRatings = ratingsRes.data;
+      userReviews = reviewsRes.data;
+      renderRatings();
+      renderReviews();
+      renderRecs(recsRes.data);
+    });
+  </script>
+</body>
+</html>
