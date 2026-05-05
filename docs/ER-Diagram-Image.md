@@ -36,4 +36,4 @@ This ER diagram illustrates the complete database structure for the IMDB Clone a
 - **Junction Tables**: Enable many-to-many relationships between movies and genres/actors
 - **Data Integrity**: Enforced at application level with proper validation
 
-For more detailed technical specifications, see the [Database Schema Documentation](database-schema.md) and [ASCII ER Diagram](ER-Diagram.md).
+
