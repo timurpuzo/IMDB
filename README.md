@@ -173,8 +173,6 @@ IMDB/
 
 For detailed database structure and relationships, see:
 - **[ER Diagram Image](docs/ER-Diagram-Image.md)** - Visual ER diagram with image representation
-- **[Database Schema Documentation](docs/database-schema.md)** - Complete ER diagram with Mermaid syntax
-- **[ER Diagram Visualization](docs/ER-Diagram.md)** - ASCII representation of database relationships
 
 ### Database Collections
 
