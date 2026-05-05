@@ -4,7 +4,7 @@
 
 Below is the visual representation of the IMDB Clone database schema showing all entities and their relationships:
 
-![IMDB Database ER Diagram](./images/er-diagram.png)
+![IMDB Database ER Diagram](./images/Untitled.png)
 
 ## Overview
 
