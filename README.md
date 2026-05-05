@@ -175,14 +175,24 @@ For detailed database structure and relationships, see:
 - **[Database Schema Documentation](docs/database-schema.md)** - Complete ER diagram with Mermaid syntax
 - **[ER Diagram Visualization](docs/ER-Diagram.md)** - ASCII representation of database relationships
 
-### Key Tables
-- **USER** - User accounts and profiles
-- **MOVIE** - Movie/TV show information
-- **REVIEW** - User reviews
-- **RATING** - Numerical ratings (1-10)
-- **WATCHLIST** - Personal movie collections
-- **GENRE** - Movie categories
-- **ACTOR** - Cast information
-- **MOVIE_GENRE** - Movie-genre relationships
-- **MOVIE_ACTOR** - Movie-actor relationships
-```
+### Database Collections
+
+The application uses MongoDB with Mongoose. The database contains the following eleven collections:
+
+**users** - Stores registered user accounts, including username, email, hashed password, role (user or admin), avatar URL, and timestamps for account creation
+
+**movies** - The main content entity of the application, storing the title, overview, poster image URL, release date, content type (movie or TV show), and computed fields for average rating and total rating count
+
+**reviews** - Stores text-based reviews written by users about specific movies. Each review is linked to a user and a movie via reference IDs, and includes the review text and timestamps for creation and last edit
+
+**ratings** - Stores the numeric score (between 1 and 10) that a user assigns to a specific movie. The system enforces one rating per user per movie, and updates the movie's average rating automatically when a rating is added, changed, or removed
+
+**watchlist** - A junction collection that tracks which movies each user has saved to their personal watchlist, storing references to both the user and the movie along with the date the item was added
+
+**genres** - Stores movie genre categories (Action, Drama, Comedy, etc.)
+
+**actors** - Stores actor information including name, biography, and birth year
+
+**movie_genres** - Junction table implementing many-to-many relationship between movies and genres
+
+**movie_actors** - Junction table implementing many-to-many relationship between movies and actors
