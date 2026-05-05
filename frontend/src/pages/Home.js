@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import MovieCard from '../components/MovieCard';
+import SkeletonCard from '../components/SkeletonCard';
 import { getMovies, getGenres } from '../services/api';
 
 function Home() {
@@ -72,7 +73,11 @@ function Home() {
       </div>
 
       {loading ? (
-        <div className="loader">Loading...</div>
+        <div className="movie-grid">
+          {[...Array(12)].map((_, index) => (
+            <SkeletonCard key={`skeleton-${index}`} />
+          ))}
+        </div>
       ) : movies.length === 0 ? (
         <div className="empty-state">
           <h3>No movies found</h3>

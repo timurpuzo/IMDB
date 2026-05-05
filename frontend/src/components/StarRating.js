@@ -8,7 +8,7 @@ function StarRating({ value = 0, onChange, readonly = false }) {
       {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((star) => (
         <span
           key={star}
-          className={`star ${star <= (hover || value) ? 'filled' : ''}`}
+          className={`star ${star <= (hover || value) ? 'filled' : ''} ${!readonly && hover === star ? 'star-hover' : ''}`}
           onClick={() => !readonly && onChange && onChange(star)}
           onMouseEnter={() => !readonly && setHover(star)}
           onMouseLeave={() => !readonly && setHover(0)}

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import MovieCard from '../components/MovieCard';
+import SkeletonCard from '../components/SkeletonCard';
 import { getWatchlist } from '../services/api';
 
 function WatchlistPage() {
@@ -21,7 +22,18 @@ function WatchlistPage() {
       .finally(() => setLoading(false));
   }, [user, navigate]);
 
-  if (loading) return <div className="loader">Loading...</div>;
+  if (loading) {
+  return (
+    <div className="watchlist-page">
+      <h1>My Watchlist</h1>
+      <div className="movie-grid">
+        {[...Array(8)].map((_, index) => (
+          <SkeletonCard key={`skeleton-${index}`} />
+        ))}
+      </div>
+    </div>
+  );
+}
 
   return (
     <div className="watchlist-page">

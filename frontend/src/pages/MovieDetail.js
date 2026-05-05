@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../hooks/useToast';
 import StarRating from '../components/StarRating';
 import ReviewForm from '../components/ReviewForm';
 import {
@@ -18,6 +19,7 @@ import {
 function MovieDetail() {
   const { id } = useParams();
   const { user } = useAuth();
+  const { success, error } = useToast();
   const [movie, setMovie] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [myRating, setMyRating] = useState(0);
@@ -71,9 +73,26 @@ function MovieDetail() {
 
   const handleToggleWatchlist = async () => {
     try {
+      // Optimistic update - update UI immediately
+      const newWatchlistState = !inWatchlist;
+      setInWatchlist(newWatchlistState);
+      
       const { data } = await toggleWatchlist(id);
-      setInWatchlist(data.data.added);
+      
+      // Verify the response matches our optimistic update
+      if (data.data.added !== newWatchlistState) {
+        setInWatchlist(data.data.added);
+      }
+      
+      success(
+        newWatchlistState 
+          ? 'Added to watchlist!' 
+          : 'Removed from watchlist'
+      );
     } catch (err) {
+      // Revert optimistic update on error
+      setInWatchlist(!inWatchlist);
+      error('Failed to update watchlist');
       console.error(err);
     }
   };
@@ -82,8 +101,9 @@ function MovieDetail() {
     try {
       await createReview(id, text);
       fetchData();
+      success('Review submitted successfully!');
     } catch (err) {
-      alert(err.response?.data?.message || 'Error submitting review');
+      error(err.response?.data?.message || 'Error submitting review');
     }
   };
 
@@ -92,8 +112,9 @@ function MovieDetail() {
       await updateReview(id, text);
       setEditingReview(false);
       fetchData();
+      success('Review updated successfully!');
     } catch (err) {
-      alert(err.response?.data?.message || 'Error updating review');
+      error(err.response?.data?.message || 'Error updating review');
     }
   };
 
@@ -195,6 +216,7 @@ function MovieDetail() {
                 initialText={review.text}
                 onSubmit={handleUpdateReview}
                 buttonLabel="Update Review"
+                onCancel={() => setEditingReview(false)}
               />
             ) : (
               <p className="review-text">{review.text}</p>

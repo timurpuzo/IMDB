@@ -1,5 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './hooks/useAuth';
+import { ThemeProvider } from './hooks/useTheme';
+import { ToastProvider } from './hooks/useToast';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import MovieDetail from './pages/MovieDetail';
@@ -12,8 +14,10 @@ import './App.css';
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
+    <ToastProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <Router>
         <Navbar />
         <main className="main-content">
           <Routes>
@@ -26,8 +30,10 @@ function App() {
             <Route path="/admin" element={<AdminPanel />} />
           </Routes>
         </main>
-      </Router>
-    </AuthProvider>
+          </Router>
+        </AuthProvider>
+      </ThemeProvider>
+    </ToastProvider>
   );
 }
 
