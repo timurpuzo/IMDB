@@ -163,5 +163,26 @@ IMDB/
 │       ├── hooks/useAuth.js
 │       ├── pages/       (Home, MovieDetail, Login, Register, Profile, WatchlistPage, AdminPanel)
 │       └── services/api.js
+├── docs/
+│   ├── ER-Diagram.md
+│   └── database-schema.md
 └── README.md
+```
+
+## Database Schema
+
+For detailed database structure and relationships, see:
+- **[Database Schema Documentation](docs/database-schema.md)** - Complete ER diagram with Mermaid syntax
+- **[ER Diagram Visualization](docs/ER-Diagram.md)** - ASCII representation of database relationships
+
+### Key Tables
+- **USER** - User accounts and profiles
+- **MOVIE** - Movie/TV show information
+- **REVIEW** - User reviews
+- **RATING** - Numerical ratings (1-10)
+- **WATCHLIST** - Personal movie collections
+- **GENRE** - Movie categories
+- **ACTOR** - Cast information
+- **MOVIE_GENRE** - Movie-genre relationships
+- **MOVIE_ACTOR** - Movie-actor relationships
 ```
