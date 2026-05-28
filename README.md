@@ -5,6 +5,8 @@ A full-stack web application for discovering movies and TV shows, reading/writin
 **Authors:** Timur Puzo & Malek Altarhuni  
 **Course:** IT 309 Software Engineering
 
+**GitHub Repository:** [https://github.com/timurpuzo/IMDB](https://github.com/timurpuzo/IMDB)
+
 ---
 
 ## Tech Stack
