@@ -32,29 +32,29 @@ input, textarea, select {
 }
 
 [data-theme="light"] {
-  --bg-primary: #ffffff;
-  --bg-secondary: #f8f9fa;
+  --bg-primary: #f5f5f5;
+  --bg-secondary: #e9ecef;
   --bg-card: #ffffff;
-  --border-color: #dee2e6;
-  --text-primary: #212529;
-  --text-secondary: #6c757d;
-  --text-dim: #adb5bd;
-  --navbar-bg: #343a40;
+  --border-color: #ced4da;
+  --text-primary: #1a1a1a;
+  --text-secondary: #495057;
+  --text-dim: #6c757d;
+  --navbar-bg: #212529;
   --navbar-text: #ffffff;
-  --shadow: rgba(0, 0, 0, 0.1);
+  --shadow: rgba(0, 0, 0, 0.15);
 }
 
 [data-theme="dark"] {
   --bg-primary: #0a0a0a;
   --bg-secondary: #121212;
   --bg-card: #1a1a1a;
-  --border-color: #2a2a2a;
-  --text-primary: #e5e5e5;
-  --text-secondary: #b3b3b3;
-  --text-dim: #999;
+  --border-color: #3a3a3a;
+  --text-primary: #ffffff;
+  --text-secondary: #d4d4d4;
+  --text-dim: #a0a0a0;
   --navbar-bg: #1a1a1a;
-  --navbar-text: #e5e5e5;
-  --shadow: rgba(0, 0, 0, 0.3);
+  --navbar-text: #ffffff;
+  --shadow: rgba(0, 0, 0, 0.4);
 }
 
 body {

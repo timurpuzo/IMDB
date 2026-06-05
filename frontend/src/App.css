@@ -181,9 +181,9 @@
   width: 100%;
   padding: 10px 14px;
   border-radius: 6px;
-  border: 1px solid var(--border);
-  background: var(--dark);
-  color: var(--text);
+  border: 2px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-primary);
   font-size: 0.95rem;
   outline: none;
   transition: border-color 0.2s;
@@ -193,6 +193,7 @@
 .form-group textarea:focus,
 .form-group select:focus {
   border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(245, 197, 24, 0.2);
 }
 
 .auth-page {
@@ -296,15 +297,17 @@
   min-width: 200px;
   padding: 10px 16px;
   border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--card);
-  color: var(--text);
+  border: 2px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-primary);
   font-size: 0.95rem;
   outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .search-bar input[type="text"]:focus {
   border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(245, 197, 24, 0.2);
 }
 
 .search-bar select {
