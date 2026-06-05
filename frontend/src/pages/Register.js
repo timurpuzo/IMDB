@@ -6,7 +6,7 @@ import { register } from '../services/api';
 function Register() {
   const [form, setForm] = useState({ username: '', email: '', password: '' });
   const [error, setError] = useState('');
-  const { loginUser } = useAuth();
+  const { login: loginUser } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
